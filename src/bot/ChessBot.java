@@ -4,7 +4,7 @@ import model.*;
 
 public class ChessBot {
 
-    private static final int MAX_DEPTH = 2; // Para testes mais rápidos, ajuste se quiser
+    private static final int MAX_DEPTH = 2;
 
     public Move getBestMove(Board board, boolean isWhite) {
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -19,10 +19,13 @@ public class ChessBot {
                             if (piece.isValidMove(toRow, toCol, board)) {
                                 Board clone = cloneBoard(board);
                                 if (clone.tryMove(fromRow, fromCol, toRow, toCol, isWhite)) {
-                                    double score = minimax(clone, MAX_DEPTH - 1, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, !isWhite);
-                                    if (score > bestScore) {
-                                        bestScore = score;
-                                        bestMove = new Move(fromRow, fromCol, toRow, toCol);
+                                    // Não deixa o próprio rei em xeque
+                                    if (!GameRules.isKingInCheck(clone, isWhite)) {
+                                        double score = minimax(clone, MAX_DEPTH - 1, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, !isWhite);
+                                        if (score > bestScore) {
+                                            bestScore = score;
+                                            bestMove = new Move(fromRow, fromCol, toRow, toCol);
+                                        }
                                     }
                                 }
                             }
@@ -36,7 +39,7 @@ public class ChessBot {
 
     private double minimax(Board board, int depth, double alpha, double beta, boolean maximizingPlayer) {
         if (depth == 0) {
-            return evaluateBoard(board);
+            return evaluateBoard(board, maximizingPlayer);
         }
 
         double bestEval = maximizingPlayer ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
@@ -50,15 +53,17 @@ public class ChessBot {
                             if (piece.isValidMove(toRow, toCol, board)) {
                                 Board clone = cloneBoard(board);
                                 if (clone.tryMove(fromRow, fromCol, toRow, toCol, maximizingPlayer)) {
-                                    double eval = minimax(clone, depth - 1, alpha, beta, !maximizingPlayer);
-                                    if (maximizingPlayer) {
-                                        bestEval = Math.max(bestEval, eval);
-                                        alpha = Math.max(alpha, eval);
-                                    } else {
-                                        bestEval = Math.min(bestEval, eval);
-                                        beta = Math.min(beta, eval);
+                                    if (!GameRules.isKingInCheck(clone, maximizingPlayer)) {
+                                        double eval = minimax(clone, depth - 1, alpha, beta, !maximizingPlayer);
+                                        if (maximizingPlayer) {
+                                            bestEval = Math.max(bestEval, eval);
+                                            alpha = Math.max(alpha, eval);
+                                        } else {
+                                            bestEval = Math.min(bestEval, eval);
+                                            beta = Math.min(beta, eval);
+                                        }
+                                        if (beta <= alpha) break;
                                     }
-                                    if (beta <= alpha) break;
                                 }
                             }
                         }
@@ -69,8 +74,9 @@ public class ChessBot {
         return bestEval;
     }
 
-    private double evaluateBoard(Board board) {
+    private double evaluateBoard(Board board, boolean maximizingPlayer) {
         double score = 0;
+
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPiece(row, col);
@@ -79,6 +85,17 @@ public class ChessBot {
                 }
             }
         }
+
+        // Penaliza se o próprio rei estiver em xeque
+        if (GameRules.isKingInCheck(board, maximizingPlayer)) {
+            score -= 50;
+        }
+
+        // Bonifica se o rei inimigo estiver em xeque
+        if (GameRules.isKingInCheck(board, !maximizingPlayer)) {
+            score += 50;
+        }
+
         return score;
     }
 

@@ -40,6 +40,22 @@ public class ChessController implements ActionListener {
         }
     }
 
+    public void loadSavedGame(String filename) {
+        GameState loaded = GameState.loadGame(filename);
+        if (loaded != null) {
+            this.gameState = loaded;
+            view.updateBoard(gameState.getBoard());
+            updateStatus();
+            view.showMessage("Jogo carregado com sucesso!");
+
+            if (versusBot && !gameState.isWhiteTurn()) {
+                botMove();
+            }
+        } else {
+            view.showMessage("Falha ao carregar o jogo salvo.");
+        }
+    }
+
     private long getTimeFromSelection(String selection) {
         switch (selection) {
             case "Bullet (1 min)": return 60_000;
@@ -67,14 +83,24 @@ public class ChessController implements ActionListener {
                 view.highlightSquare(row, col);
             }
         } else {
-            if (gameState.getBoard().tryMove(selectedRow, selectedCol, row, col, gameState.isWhiteTurn())) {
-                posJogada(row, col);
-                if (versusBot && !gameEnded && !gameState.isWhiteTurn()) {
-                    botMove();
+            boolean moveSuccess = gameState.getBoard().tryMove(selectedRow, selectedCol, row, col, gameState.isWhiteTurn());
+
+            if (moveSuccess) {
+                if (!GameRules.isKingInCheck(gameState.getBoard(), gameState.isWhiteTurn())) {
+                    posJogada(row, col);
+
+                    if (versusBot && !gameEnded && !gameState.isWhiteTurn()) {
+                        botMove();
+                    }
+                } else {
+                    gameState.getBoard().movePiece(row, col, selectedRow, selectedCol);
+                    gameState.getBoard().setPiece(row, col, null);
+                    view.showMessage("Movimento inválido! Seu rei ficaria em xeque.");
                 }
             } else {
                 view.showMessage("Jogada inválida!");
             }
+
             selectedRow = -1;
             selectedCol = -1;
             view.resetHighlight();
@@ -92,18 +118,23 @@ public class ChessController implements ActionListener {
             }
         }
 
+        gameState.saveGame("src/resources/saved_game.dat");
+
         gameState.switchTurn();
         gameTimer.switchTurn();
+
         view.updateBoard(board);
-        gameState.saveGame("src/resources/saved_game.dat");
         updateStatus();
+
         verificarEstadoFinal();
     }
 
     private void botMove() {
         Move botMove = bot.getBestMove(gameState.getBoard(), false);
         if (botMove != null) {
-            if (gameState.getBoard().tryMove(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol(), false)) {
+            boolean moveSuccess = gameState.getBoard().tryMove(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol(), false);
+
+            if (moveSuccess) {
                 posJogada(botMove.getToRow(), botMove.getToCol());
             }
         }
@@ -158,7 +189,7 @@ public class ChessController implements ActionListener {
         String turno = gameState.isWhiteTurn() ? playerWhiteName + " (Brancas)" : playerBlackName + " (Pretas)";
         String timeWhite = formatTime(gameTimer.getWhiteTimeMillis());
         String timeBlack = formatTime(gameTimer.getBlackTimeMillis());
-        view.setStatusText("Turno: " + turno + " | Tempo Brancas: " + timeWhite + " | Tempo Pretas: " + timeBlack);
+        view.setStatusText("Turno: " + turno + " | Tempo Pretas: " + timeBlack + " | Tempo Brancas: " + timeWhite);
     }
 
     private String formatTime(long millis) {

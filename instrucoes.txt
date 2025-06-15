@@ -1,0 +1,25 @@
+✅ Compilar o Projeto:
+
+javac -d bin src/model/*.java src/view/*.java src/controller/*.java src/bot/*.java src/network/*.java src/Main.java
+
+------------------------------
+
+✅ Executar o Jogo Local:
+
+java -cp bin Main
+
+------------------------------
+
+✅ Jogar Remotamente (Sockets):
+
+- Abra dois terminais:
+
+Terminal 1 - Iniciar o Servidor:
+
+java -cp bin network.ChessServer
+
+Terminal 2 - Iniciar o Cliente:
+
+java -cp bin network.ChessClient
+
+------------------------------

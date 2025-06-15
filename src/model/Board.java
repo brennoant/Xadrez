@@ -34,40 +34,30 @@ public class Board implements Serializable {
         return false;
     }
 
-    public Piece[][] getBoard() {
-        return board;
-    }
-
     private void setupInitialBoard() {
-        // Peões
         for (int col = 0; col < 8; col++) {
             setPiece(1, col, new Pawn(1, col, false));
             setPiece(6, col, new Pawn(6, col, true));
         }
 
-        // Torres
         setPiece(0, 0, new Rook(0, 0, false));
         setPiece(0, 7, new Rook(0, 7, false));
         setPiece(7, 0, new Rook(7, 0, true));
         setPiece(7, 7, new Rook(7, 7, true));
 
-        // Cavalos
         setPiece(0, 1, new Knight(0, 1, false));
         setPiece(0, 6, new Knight(0, 6, false));
         setPiece(7, 1, new Knight(7, 1, true));
         setPiece(7, 6, new Knight(7, 6, true));
 
-        // Bispos
         setPiece(0, 2, new Bishop(0, 2, false));
         setPiece(0, 5, new Bishop(0, 5, false));
         setPiece(7, 2, new Bishop(7, 2, true));
         setPiece(7, 5, new Bishop(7, 5, true));
 
-        // Damas
         setPiece(0, 3, new Queen(0, 3, false));
         setPiece(7, 3, new Queen(7, 3, true));
 
-        // Reis
         setPiece(0, 4, new King(0, 4, false));
         setPiece(7, 4, new King(7, 4, true));
     }

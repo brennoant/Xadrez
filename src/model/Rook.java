@@ -7,7 +7,7 @@ public class Rook extends Piece {
 
     @Override
     public boolean isValidMove(int targetRow, int targetCol, Board board) {
-        if (row != targetRow && col != targetCol) return false; // Só linha reta
+        if (row != targetRow && col != targetCol) return false;
 
         int rowStep = Integer.compare(targetRow, row);
         int colStep = Integer.compare(targetCol, col);
@@ -16,9 +16,7 @@ public class Rook extends Piece {
         int currCol = col + colStep;
 
         while (currRow != targetRow || currCol != targetCol) {
-            if (board.getPiece(currRow, currCol) != null) {
-                return false; // Bloqueio no caminho
-            }
+            if (board.getPiece(currRow, currCol) != null) return false;
             currRow += rowStep;
             currCol += colStep;
         }

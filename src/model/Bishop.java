@@ -10,7 +10,7 @@ public class Bishop extends Piece {
         int dRow = targetRow - row;
         int dCol = targetCol - col;
 
-        if (Math.abs(dRow) != Math.abs(dCol)) return false; // Só diagonal
+        if (Math.abs(dRow) != Math.abs(dCol)) return false;
 
         int rowStep = Integer.compare(targetRow, row);
         int colStep = Integer.compare(targetCol, col);
@@ -19,9 +19,7 @@ public class Bishop extends Piece {
         int currCol = col + colStep;
 
         while (currRow != targetRow && currCol != targetCol) {
-            if (board.getPiece(currRow, currCol) != null) {
-                return false; // Bloqueio
-            }
+            if (board.getPiece(currRow, currCol) != null) return false;
             currRow += rowStep;
             currCol += colStep;
         }

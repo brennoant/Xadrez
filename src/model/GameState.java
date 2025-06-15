@@ -11,10 +11,19 @@ public class GameState implements Serializable {
         whiteTurn = true;
     }
 
-    public Board getBoard() { return board; }
-    public boolean isWhiteTurn() { return whiteTurn; }
-    public void switchTurn() { whiteTurn = !whiteTurn; }
+    public Board getBoard() {
+        return board;
+    }
 
+    public boolean isWhiteTurn() {
+        return whiteTurn;
+    }
+
+    public void switchTurn() {
+        whiteTurn = !whiteTurn;
+    }
+
+    // Salva o estado do jogo em arquivo
     public void saveGame(String filename) {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
             out.writeObject(this);
@@ -23,12 +32,13 @@ public class GameState implements Serializable {
         }
     }
 
+    // Carrega o estado do jogo de arquivo
     public static GameState loadGame(String filename) {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
             return (GameState) in.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 }
