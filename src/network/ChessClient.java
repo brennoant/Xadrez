@@ -5,57 +5,40 @@ import model.GameState;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * Cliente para o modo de jogo remoto via sockets.
+ * Envia o estado atual do jogo para o servidor e aguarda uma resposta de confirmação.
+ *
+ * Autor: Brenno Soares
+ */
 public class ChessClient {
-    private Socket socket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-    private GameState gameState;
+    public static void main(String[] args) {
+        try (Socket socket = new Socket("localhost", 5000)) {
+            System.out.println("Conectado ao servidor!");
 
-    public ChessClient(String serverAddress, int port) {
-        try {
-            socket = new Socket(serverAddress, port);
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-            startGameLoop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+            // Exemplo: Carregando um estado de jogo (poderia ser o estado atual durante o jogo)
+            GameState currentState = GameState.loadGame("src/resources/saved_game.dat");
 
-    private void startGameLoop() {
-        try {
-            while (true) {
-                // Recebe o estado atual do servidor
-                gameState = (GameState) in.readObject();
-                System.out.println("Estado do jogo recebido do servidor.");
+            if (currentState != null) {
+                out.writeObject(currentState);
+                System.out.println("Estado do jogo enviado ao servidor.");
 
-                // Aqui você pode implementar uma interface de cliente
-                // Para este exemplo: apenas salva o estado local e devolve após uma jogada fictícia
-                // (Depois você pode integrar com a ChessView e o Controller local)
-
-                // Exemplo simples: só envia o estado de volta (como se tivesse feito uma jogada)
-                out.writeObject(gameState);
-                out.flush();
+                // Aguarda confirmação do servidor
+                Object response = in.readObject();
+                System.out.println("Resposta do servidor: " + response);
+            } else {
+                System.out.println("Falha ao carregar o estado do jogo para enviar.");
             }
+
+            out.close();
+            in.close();
+            socket.close();
+
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-        } finally {
-            closeConnections();
         }
-    }
-
-    private void closeConnections() {
-        try {
-            if (in != null) in.close();
-            if (out != null) out.close();
-            if (socket != null) socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args) {
-        new ChessClient("localhost", 12345);
     }
 }

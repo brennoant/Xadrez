@@ -6,63 +6,49 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * Servidor para o modo de jogo remoto via sockets.
+ * Agora evita o loop infinito ao receber o estado do jogo.
+ *
+ * Autor: Brenno Soares
+ */
 public class ChessServer {
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-    private GameState gameState;
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(5000)) {
+            System.out.println("Servidor iniciado. Aguardando conexão...");
 
-    public ChessServer(int port) {
-        try {
-            serverSocket = new ServerSocket(port);
-            System.out.println("Servidor aguardando conexão...");
-            clientSocket = serverSocket.accept();
+            Socket socket = serverSocket.accept();
             System.out.println("Cliente conectado!");
 
-            out = new ObjectOutputStream(clientSocket.getOutputStream());
-            in = new ObjectInputStream(clientSocket.getInputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
-            gameState = new GameState();
-            startGameLoop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+            try {
+                // Recebe o estado do jogo apenas uma vez
+                Object receivedObject = in.readObject();
 
-    private void startGameLoop() {
-        try {
-            while (true) {
-                // Envia estado atual para o cliente
-                out.writeObject(gameState);
-                out.flush();
+                if (receivedObject instanceof GameState) {
+                    GameState receivedState = (GameState) receivedObject;
+                    System.out.println("Estado do jogo recebido no servidor.");
 
-                // Aguarda jogada do cliente
-                GameState newState = (GameState) in.readObject();
-                if (newState != null) {
-                    gameState = newState;
-                    System.out.println("Estado do jogo atualizado pelo cliente.");
+                    // Aqui você pode salvar o estado, atualizar o jogo ou apenas responder
+                    out.writeObject("Servidor: Estado recebido com sucesso!");
+                } else {
+                    System.out.println("Objeto recebido não é um GameState.");
                 }
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            closeConnections();
-        }
-    }
 
-    private void closeConnections() {
-        try {
-            if (in != null) in.close();
-            if (out != null) out.close();
-            if (clientSocket != null) clientSocket.close();
-            if (serverSocket != null) serverSocket.close();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            // Fecha os streams e o socket após o processamento
+            in.close();
+            out.close();
+            socket.close();
+            System.out.println("Conexão encerrada.");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        new ChessServer(12345);
     }
 }
